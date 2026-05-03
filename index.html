@@ -443,11 +443,10 @@ ${bloodSection}${galacticSection}## ✦ Soul Synthesis${addonSections}`;
     const res=await fetch('https://worker-super-heart-af11.douwkotze.workers.dev',{
       method:'POST',
       headers:{
-        'Content-Type':'application/json',
-        'x-api-key':apiKey,
-        'anthropic-version':'2023-06-01'
+        'Content-Type':'application/json'
       },
       body:JSON.stringify({
+        apiKey:apiKey,
         model:'claude-opus-4-5',
         max_tokens:8000,
         system:`You are the Soul Blueprint oracle — a deeply wise, poetic guide who creates personalised esoteric profile reports. Your writing is warm, insightful, and beautifully crafted. Every major section heading starts with ## ✦. Use rich markdown formatting throughout. Each section must be at minimum 200 words, richly detailed and deeply personalised.`,
