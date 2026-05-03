@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Soul Blueprint — Report Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Cinzel:wght@400;500;600&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+/* ── SCREEN STYLES ── */
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#08061a;color:#e8d8ff;font-family:'Raleway',sans-serif;font-weight:300;min-height:100vh;}
+
+/* stars */
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse at 20% 50%,rgba(59,32,128,.2) 0%,transparent 60%),
+  radial-gradient(ellipse at 80% 20%,rgba(124,95,201,.12) 0%,transparent 50%),
+  radial-gradient(1px 1px at 15% 20%,rgba(255,255,255,.8) 0%,transparent 100%),
+  radial-gradient(1px 1px at 35% 8%,rgba(255,255,255,.6) 0%,transparent 100%),
+  radial-gradient(1.5px 1.5px at 55% 30%,rgba(255,255,255,.7) 0%,transparent 100%),
+  radial-gradient(1px 1px at 70% 15%,rgba(255,255,255,.5) 0%,transparent 100%),
+  radial-gradient(1px 1px at 85% 60%,rgba(255,255,255,.6) 0%,transparent 100%),
+  radial-gradient(1px 1px at 10% 75%,rgba(255,255,255,.4) 0%,transparent 100%),
+  radial-gradient(1.5px 1.5px at 90% 85%,rgba(200,168,255,.5) 0%,transparent 100%),
+  #08061a;}
+
+.screen-wrap{position:relative;z-index:1;max-width:700px;margin:0 auto;padding:40px 20px 80px;}
+
+/* brand */
+.brand{text-align:center;margin-bottom:36px;}
+.brand-icon{width:80px;height:80px;border-radius:50%;border:1.5px solid rgba(212,168,67,.4);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;background:radial-gradient(circle,rgba(59,32,128,.5),transparent);font-size:32px;}
+.brand h1{font-family:'Cinzel',serif;font-size:24px;font-weight:500;letter-spacing:5px;color:#f0cc77;text-transform:uppercase;}
+.brand p{font-size:11px;letter-spacing:3px;color:#9b87c4;margin-top:6px;text-transform:uppercase;}
+
+/* cards */
+.card{background:rgba(255,255,255,.04);border:0.5px solid rgba(200,168,255,.15);border-radius:16px;padding:24px;margin-bottom:16px;}
+.card-title{font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;color:#9b87c4;text-transform:uppercase;margin-bottom:18px;}
+
+/* fields */
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.field-row.full{grid-template-columns:1fr;}
+.field label{display:block;font-size:11px;letter-spacing:1.5px;color:#9b87c4;text-transform:uppercase;margin-bottom:6px;}
+.field input,.field select{width:100%;background:rgba(255,255,255,.07);border:0.5px solid rgba(200,168,255,.2);border-radius:8px;color:#e8d8ff;font-family:'Raleway',sans-serif;font-size:14px;font-weight:300;padding:11px 13px;outline:none;transition:border-color .2s;-webkit-appearance:none;}
+.field input:focus,.field select:focus{border-color:rgba(200,168,255,.5);}
+.field select option{background:#1a0f3a;}
+
+/* packages */
+.pkg-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.pkg{background:rgba(255,255,255,.04);border:0.5px solid rgba(200,168,255,.15);border-radius:10px;padding:14px 10px;text-align:center;cursor:pointer;transition:all .2s;}
+.pkg:hover{border-color:rgba(200,168,255,.4);}
+.pkg.sel{background:rgba(212,168,67,.1);border-color:#d4a843;border-width:1.5px;}
+.pkg-name{font-family:'Cinzel',serif;font-size:12px;letter-spacing:1px;color:#c8a8ff;margin-bottom:4px;}
+.pkg-price{font-size:20px;font-weight:600;color:#f0cc77;margin:3px 0;}
+.pkg-badge{font-size:10px;color:#9b87c4;}
+.pkg.sel .pkg-badge{color:#d4a843;}
+
+/* addons */
+.addons-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.addon{background:rgba(255,255,255,.04);border:0.5px solid rgba(200,168,255,.15);border-radius:10px;padding:12px 8px;text-align:center;cursor:pointer;transition:all .2s;font-size:12px;color:#9b87c4;}
+.addon:hover{border-color:rgba(200,168,255,.4);color:#c8a8ff;}
+.addon.sel{background:rgba(124,95,201,.2);border-color:#7c5fc9;border-width:1.5px;color:#c8a8ff;}
+.addon-price{font-size:10px;color:#d4a843;margin-top:3px;}
+
+/* total */
+.total-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0 0;border-top:0.5px solid rgba(200,168,255,.1);margin-top:14px;}
+.total-label{font-size:12px;letter-spacing:1px;color:#9b87c4;text-transform:uppercase;}
+.total-amt{font-family:'Cinzel',serif;font-size:24px;color:#f0cc77;}
+
+/* api key */
+.api-row{display:flex;gap:10px;align-items:flex-end;}
+.api-row .field{flex:1;}
+.api-toggle{background:transparent;border:0.5px solid rgba(200,168,255,.2);border-radius:8px;color:#9b87c4;font-size:12px;padding:11px 14px;cursor:pointer;white-space:nowrap;height:42px;}
+.api-toggle:hover{border-color:rgba(200,168,255,.4);color:#c8a8ff;}
+
+/* generate button */
+.btn-generate{width:100%;padding:18px;background:linear-gradient(135deg,#3b2080,#7c5fc9);border:0.5px solid rgba(200,168,255,.3);border-radius:12px;color:#f0cc77;font-family:'Cinzel',serif;font-size:15px;letter-spacing:3px;font-weight:500;cursor:pointer;transition:all .3s;text-transform:uppercase;margin-top:16px;}
+.btn-generate:hover{background:linear-gradient(135deg,#4a2a9f,#9070df);transform:translateY(-1px);}
+.btn-generate:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+
+/* status */
+.status-box{border-radius:10px;padding:14px 16px;margin-top:12px;font-size:13px;line-height:1.7;display:none;}
+.status-box.show{display:block;}
+.status-box.loading{background:rgba(59,32,128,.2);border:0.5px solid rgba(124,95,201,.3);color:#c8a8ff;}
+.status-box.error{background:rgba(180,50,50,.15);border:0.5px solid rgba(220,100,100,.3);color:#f0a0a0;}
+
+.spinner{display:inline-block;width:14px;height:14px;border:1.5px solid rgba(200,168,255,.3);border-top-color:#7c5fc9;border-radius:50%;animation:spin 1s linear infinite;margin-right:8px;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── PRINT / PDF STYLES ── */
+@media print{
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;color-adjust:exact !important;}
+  body{background:#e8f5f5 !important;color:#1a1a2e !important;font-family:'Cormorant Garamond',serif;font-size:11pt;line-height:1.8;}
+  body::before{display:none;}
+  .screen-wrap,.form-section,.btn-generate,.status-box,.brand{display:none !important;}
+  .pdf-output{display:block !important;}
+
+  /* PDF page setup */
+  @page{size:A4;margin:18mm 20mm 20mm 20mm;}
+  
+  .pdf-page{background:#e8f5f5 !important;color:#1a1a2e !important;min-height:100vh;}
+
+  /* PDF header */
+  .pdf-header{text-align:center;padding:0 0 28px;border-bottom:1px solid rgba(0,0,0,.2);margin-bottom:32px;}
+  .pdf-header .pdf-logo{font-size:28px;margin-bottom:10px;color:#3a2a6e;}
+  .pdf-header h1{font-family:'Cinzel',serif;font-size:22pt;font-weight:500;letter-spacing:5px;color:#8b6914;text-transform:uppercase;margin-bottom:6px;}
+  .pdf-header .pdf-subtitle{font-family:'Cinzel',serif;font-size:9pt;letter-spacing:3px;color:#4a2a8a;text-transform:uppercase;}
+  .pdf-header .pdf-client{font-family:'Cormorant Garamond',serif;font-size:13pt;color:#1a1a2e;margin-top:12px;font-style:italic;}
+  .pdf-header .pdf-meta{font-size:9pt;color:#4a2a8a;margin-top:4px;letter-spacing:1px;}
+
+  /* sections */
+  .pdf-section{margin-bottom:28px;padding-bottom:24px;border-bottom:0.5px solid rgba(0,0,0,.15);}
+  .pdf-section:last-child{border-bottom:none;}
+  .pdf-section h2{font-family:'Cinzel',serif;font-size:13pt;font-weight:500;letter-spacing:2px;color:#3a2a6e;text-transform:uppercase;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,.12);}
+  .pdf-section h3{font-family:'Cinzel',serif;font-size:10pt;letter-spacing:1.5px;color:#8b6914;text-transform:uppercase;margin:16px 0 8px;}
+  .pdf-section p{font-family:'Cormorant Garamond',serif;font-size:11pt;color:#1a1a2e;margin-bottom:10px;line-height:1.85;}
+  .pdf-section ul{padding-left:18px;margin-bottom:10px;}
+  .pdf-section li{font-family:'Cormorant Garamond',serif;font-size:11pt;color:#1a1a2e;margin-bottom:5px;line-height:1.75;}
+  .pdf-section blockquote{border-left:2px solid #7c5fc9;padding:8px 0 8px 16px;margin:14px 0;color:#4a2a8a;font-style:italic;font-family:'Cormorant Garamond',serif;font-size:12pt;}
+  .pdf-section strong{color:#8b6914;font-weight:600;}
+  .pdf-section em{color:#4a2a8a;font-style:italic;}
+  .pdf-section table{width:100%;border-collapse:collapse;margin:12px 0;font-size:10pt;}
+  .pdf-section th{color:#3a2a6e;font-weight:400;font-size:9pt;letter-spacing:1px;text-transform:uppercase;padding:7px 10px;border-bottom:0.5px solid rgba(0,0,0,.2);text-align:left;}
+  .pdf-section td{padding:7px 10px;color:#1a1a2e;border-bottom:0.5px solid rgba(0,0,0,.08);}
+
+  /* section accent colours */
+  .sec-astro h2{color:#8b6914;}
+  .sec-chinese h2{color:#8b4500;}
+  .sec-numerology h2{color:#4a2a8a;}
+  .sec-gematria h2{color:#1a6e60;}
+  .sec-tarot h2{color:#8a1a4a;}
+  .sec-blood h2{color:#8a1a1a;}
+  .sec-synthesis h2{color:#3a2a6e;}
+  .sec-relationships h2{color:#8b6914;}
+  .sec-career h2{color:#8b4500;}
+  .sec-year h2{color:#4a2a8a;}
+
+  /* PDF footer */
+  .pdf-footer{text-align:center;margin-top:32px;padding-top:16px;border-top:0.5px solid rgba(0,0,0,.15);}
+  .pdf-footer p{font-size:8pt;color:#6b5a8a;letter-spacing:1px;font-family:'Cinzel',serif;}
+
+  /* page breaks */
+  .pdf-section{page-break-inside:avoid;}
+  h2,h3{page-break-after:avoid;}
+}
+
+/* hide PDF output on screen */
+.pdf-output{display:none;}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ SCREEN UI ═══════════════════════════════ -->
+<div class="screen-wrap">
+  <div class="brand">
+    <div class="brand-icon">✦</div>
+    <h1>Soul Blueprint</h1>
+    <p>Sacred Profile Generator</p>
+  </div>
+
+  <div class="form-section">
+
+    <!-- API Key -->
+    <div class="card">
+      <div class="card-title">✦ API Configuration</div>
+      <div class="api-row">
+        <div class="field">
+          <label>Anthropic API Key</label>
+          <input type="password" id="apiKey" placeholder="sk-ant-api03-..." autocomplete="off"/>
+        </div>
+        <button class="api-toggle" onclick="toggleKey()">Show</button>
+      </div>
+      <p style="font-size:11px;color:#6b5a8a;margin-top:8px;">Your key is never stored — only used for this session in your browser.</p>
+    </div>
+
+    <!-- Client Details -->
+    <div class="card">
+      <div class="card-title">✦ Client Details</div>
+      <div class="field-row full">
+        <div class="field"><label>Full Name</label><input id="fullName" placeholder="e.g. Sarah Jane Williams"/></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Date of Birth</label><input id="dob" type="date"/></div>
+        <div class="field"><label>Time of Birth (optional)</label><input id="tob" type="time"/></div>
+      </div>
+      <div class="field-row full">
+        <div class="field"><label>Place of Birth</label><input id="pob" placeholder="e.g. Bloemfontein, South Africa"/></div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Blood Type (optional)</label>
+          <select id="bloodType">
+            <option value="">— Not provided —</option>
+            <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+            <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+          </select>
+        </div>
+        <div class="field"><label>Special Focus (optional)</label><input id="focus" placeholder="e.g. career, relationships"/></div>
+      </div>
+    </div>
+
+    <!-- Package -->
+    <div class="card">
+      <div class="card-title">✦ Package</div>
+      <div class="pkg-row">
+        <div class="pkg" onclick="selPkg('simple',99)" data-id="simple">
+          <div class="pkg-name">Simple</div><div class="pkg-price">R99</div><div class="pkg-badge">Core Reading</div>
+        </div>
+        <div class="pkg sel" onclick="selPkg('full',399)" data-id="full">
+          <div class="pkg-name">Full</div><div class="pkg-price">R399</div><div class="pkg-badge">All 6 Systems</div>
+        </div>
+        <div class="pkg" onclick="selPkg('family',599)" data-id="family">
+          <div class="pkg-name">Family</div><div class="pkg-price">R599</div><div class="pkg-badge">Best Value ✦</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add-ons -->
+    <div class="card">
+      <div class="card-title">✦ Add-Ons (R149 each)</div>
+      <div class="addons-grid">
+        <div class="addon" onclick="toggleAddon(this,'Relationships')">♥ Relationships<div class="addon-price">+R149</div></div>
+        <div class="addon" onclick="toggleAddon(this,'Career & Purpose')">★ Career &amp; Purpose<div class="addon-price">+R149</div></div>
+        <div class="addon" onclick="toggleAddon(this,'Year Ahead')">◈ Year Ahead<div class="addon-price">+R149</div></div>
+      </div>
+      <div class="total-row">
+        <span class="total-label">Total</span>
+        <span class="total-amt" id="totalAmt">R399</span>
+      </div>
+    </div>
+
+    <div style="background:rgba(255,255,255,.04);border:0.5px solid rgba(200,168,255,.15);border-radius:16px;padding:20px;margin-bottom:16px;">
+      <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;color:#9b87c4;text-transform:uppercase;margin-bottom:14px;">✦ 7th System — Galactic Signature</div>
+      <div style="display:flex;align-items:flex-start;gap:12px;">
+        <input type="checkbox" id="includeGalactic" checked style="width:18px;height:18px;margin-top:3px;cursor:pointer;flex-shrink:0;accent-color:#7c5fc9;"/>
+        <label for="includeGalactic" style="cursor:pointer;font-size:13px;color:#e8d8ff;line-height:1.6;">
+          <strong style="color:#f0cc77;display:block;margin-bottom:3px;">Include 13 Moon · Dreamspell Galactic Signature</strong>
+          Kin Number · Solar Seal · Galactic Tone · Wavespell · Birth Moon<br/>
+          <span style="color:#9b87c4;font-size:11px;">Calculated from birth date · Unique 7th system</span>
+        </label>
+      </div>
+    </div>
+    <div class="status-box" id="statusBox"></div>
+    <button class="btn-generate" id="genBtn" onclick="generate()">✦ Generate &amp; Download PDF ✦</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ PDF OUTPUT ═══════════════════════════════ -->
+<div class="pdf-output" id="pdfOutput"></div>
+
+<script>
+let pkg={id:'full',price:399};
+let addons=[];
+let keyVisible=false;
+
+function selPkg(id,price){
+  pkg={id,price};
+  document.querySelectorAll('.pkg').forEach(p=>p.classList.toggle('sel',p.dataset.id===id));
+  updateTotal();
+}
+function toggleAddon(el,name){
+  el.classList.toggle('sel');
+  addons=el.classList.contains('sel')?[...new Set([...addons,name])]:addons.filter(a=>a!==name);
+  updateTotal();
+}
+function updateTotal(){
+  document.getElementById('totalAmt').textContent='R'+(pkg.price+addons.length*149);
+}
+function toggleKey(){
+  keyVisible=!keyVisible;
+  document.getElementById('apiKey').type=keyVisible?'text':'password';
+  document.querySelector('.api-toggle').textContent=keyVisible?'Hide':'Show';
+}
+
+function status(msg,type='loading'){
+  const box=document.getElementById('statusBox');
+  box.className='status-box show '+type;
+  box.innerHTML=type==='loading'?`<span class="spinner"></span>${msg}`:msg;
+}
+
+const msgs=[
+  'Mapping your celestial coordinates...',
+  'Calculating your numerological frequencies...',
+  'Consulting the Chinese zodiac oracle...',
+  'Reading the Tarot birth cards...',
+  'Weaving the cosmic tapestry...',
+  'Almost ready — composing your Soul Synthesis...'
+];
+
+function getNumerology(dobStr, fullName){
+  // Life Path: sum all digits of DOB, reduce (keep 11,22,33)
+  const digits = dobStr.replace(/-/g,'').split('').map(Number);
+  let lp = digits.reduce((a,b)=>a+b,0);
+  while(lp>9 && ![11,22,33].includes(lp)){
+    lp = String(lp).split('').map(Number).reduce((a,b)=>a+b,0);
+  }
+  // Pythagorean values
+  const pv={a:1,b:2,c:3,d:4,e:5,f:6,g:7,h:8,i:9,j:1,k:2,l:3,m:4,n:5,o:6,p:7,q:8,r:9,s:1,t:2,u:3,v:4,w:5,x:6,y:7,z:8};
+  const vowels='aeiou';
+  const letters=fullName.toLowerCase().replace(/[^a-z]/g,'').split('');
+  let expr=letters.reduce((a,c)=>a+(pv[c]||0),0);
+  while(expr>9 && ![11,22,33].includes(expr)) expr=String(expr).split('').map(Number).reduce((a,b)=>a+b,0);
+  let soul=letters.filter(c=>vowels.includes(c)).reduce((a,c)=>a+(pv[c]||0),0);
+  while(soul>9 && ![11,22,33].includes(soul)) soul=String(soul).split('').map(Number).reduce((a,b)=>a+b,0);
+  let pers=letters.filter(c=>!vowels.includes(c)).reduce((a,c)=>a+(pv[c]||0),0);
+  while(pers>9 && ![11,22,33].includes(pers)) pers=String(pers).split('').map(Number).reduce((a,b)=>a+b,0);
+  const lpLabel=lp===33?'33/6':lp===22?'22/4':lp===11?'11/2':String(lp);
+  return {lifePath:lp,lifePathLabel:lpLabel,expression:expr,soulUrge:soul,personality:pers};
+}
+
+function getTarotBirthCards(dobStr){
+  const major={0:'The Fool',1:'The Magician',2:'The High Priestess',3:'The Empress',
+    4:'The Emperor',5:'The Hierophant',6:'The Lovers',7:'The Chariot',8:'Strength',
+    9:'The Hermit',10:'Wheel of Fortune',11:'Justice',12:'The Hanged Man',13:'Death',
+    14:'Temperance',15:'The Devil',16:'The Tower',17:'The Star',18:'The Moon',
+    19:'The Sun',20:'Judgement',21:'The World'};
+  const d=new Date(dobStr+'T12:00:00');
+  const day=d.getDate(), month=d.getMonth()+1, year=d.getFullYear();
+  const yrSum=String(year).split('').map(Number).reduce((a,b)=>a+b,0);
+  let total=day+month+yrSum;
+  while(total>21) total=String(total).split('').map(Number).reduce((a,b)=>a+b,0);
+  const card1=major[total];
+  let card2=null;
+  if(total>9){
+    const n2=String(total).split('').map(Number).reduce((a,b)=>a+b,0);
+    card2=major[n2];
+  }
+  return {card1,card2,num1:total};
+}
+
+function getChineseZodiac(dobStr){
+  // Chinese New Year dates for years around likely birth dates
+  const cny={
+    1920:'02/20',1921:'02/08',1922:'01/28',1923:'02/16',1924:'02/05',
+    1925:'01/24',1926:'02/13',1927:'02/02',1928:'01/23',1929:'02/10',
+    1930:'01/30',1931:'02/17',1932:'02/06',1933:'01/26',1934:'02/14',
+    1935:'02/04',1936:'01/24',1937:'02/11',1938:'01/31',1939:'02/19',
+    1940:'02/08',1941:'01/27',1942:'02/15',1943:'02/05',1944:'01/25',
+    1945:'02/13',1946:'02/02',1947:'01/22',1948:'02/10',1949:'01/29',
+    1950:'02/17',1951:'02/06',1952:'01/27',1953:'02/14',1954:'02/03',
+    1955:'01/24',1956:'02/12',1957:'01/31',1958:'02/18',1959:'02/08',
+    1960:'01/28',1961:'02/15',1962:'02/05',1963:'01/25',1964:'02/13',
+    1965:'02/02',1966:'01/21',1967:'02/09',1968:'01/30',1969:'02/17',
+    1970:'02/06',1971:'01/27',1972:'02/15',1973:'02/03',1974:'01/23',
+    1975:'02/11',1976:'01/31',1977:'02/18',1978:'02/07',1979:'01/28',
+    1980:'02/16',1981:'02/05',1982:'01/25',1983:'02/13',1984:'02/02',
+    1985:'02/20',1986:'02/09',1987:'01/29',1988:'02/17',1989:'02/06',
+    1990:'01/27',1991:'02/15',1992:'02/04',1993:'01/23',1994:'02/10',
+    1995:'01/31',1996:'02/19',1997:'02/07',1998:'01/28',1999:'02/16',
+    2000:'02/05',2001:'01/24',2002:'02/12',2003:'02/01',2004:'01/22',
+    2005:'02/09',2006:'01/29',2007:'02/18',2008:'02/07',2009:'01/26',
+    2010:'02/14',2011:'02/03',2012:'01/23',2013:'02/10',2014:'01/31',
+    2015:'02/19',2016:'02/08',2017:'01/28',2018:'02/16',2019:'02/05',
+    2020:'01/25',2021:'02/12',2022:'02/01',2023:'01/22',2024:'02/10',
+    2025:'01/29',2026:'02/17'
+  };
+  const animals=['Rat','Ox','Tiger','Rabbit','Dragon','Snake','Horse','Goat','Monkey','Rooster','Dog','Pig'];
+  const elements=['Metal','Metal','Water','Water','Wood','Wood','Fire','Fire','Earth','Earth'];
+  const animalColors=['Water','Earth','Wood','Wood','Earth','Fire','Fire','Earth','Metal','Metal','Earth','Water'];
+
+  const dob=new Date(dobStr+'T12:00:00');
+  const year=dob.getFullYear();
+  const cnyDateStr=cny[year];
+  let zodiacYear=year;
+  if(cnyDateStr){
+    const [m,d]=cnyDateStr.split('/');
+    const cnyDate=new Date(year,parseInt(m)-1,parseInt(d));
+    if(dob<cnyDate) zodiacYear=year-1;
+  }
+  // Animal index: 1900 = Rat (index 0)
+  const animalIdx=((zodiacYear-1900)%12+12)%12;
+  // Element: based on last digit of zodiac year
+  const elemIdx=((zodiacYear-1900)%10+10)%10;
+  const yinYang=zodiacYear%2===0?'Yang':'Yin';
+  return {
+    year:zodiacYear,
+    animal:animals[animalIdx],
+    element:elements[elemIdx],
+    yinYang:yinYang,
+    full:`${elements[elemIdx]} ${animals[animalIdx]}`
+  };
+}
+
+function getGalacticSignature(dobStr){
+  const SEALS=[
+    {n:1,name:"Red Dragon",power:"Birth",action:"Nurtures"},
+    {n:2,name:"White Wind",power:"Spirit",action:"Communicates"},
+    {n:3,name:"Blue Night",power:"Abundance",action:"Dreams"},
+    {n:4,name:"Yellow Seed",power:"Flowering",action:"Targets"},
+    {n:5,name:"Red Serpent",power:"Life Force",action:"Survives"},
+    {n:6,name:"White World-Bridger",power:"Death",action:"Equalises"},
+    {n:7,name:"Blue Hand",power:"Accomplishment",action:"Knows"},
+    {n:8,name:"Yellow Star",power:"Elegance",action:"Beautifies"},
+    {n:9,name:"Red Moon",power:"Purification",action:"Flows"},
+    {n:10,name:"White Dog",power:"Love",action:"Loves"},
+    {n:11,name:"Blue Monkey",power:"Magic",action:"Plays"},
+    {n:12,name:"Yellow Human",power:"Free Will",action:"Influences"},
+    {n:13,name:"Red Skywalker",power:"Space",action:"Explores"},
+    {n:14,name:"White Wizard",power:"Timelessness",action:"Enchants"},
+    {n:15,name:"Blue Eagle",power:"Vision",action:"Creates"},
+    {n:16,name:"Yellow Warrior",power:"Intelligence",action:"Questions"},
+    {n:17,name:"Red Earth",power:"Evolution",action:"Navigates"},
+    {n:18,name:"White Mirror",power:"Endlessness",action:"Reflects"},
+    {n:19,name:"Blue Storm",power:"Self-Generation",action:"Catalyses"},
+    {n:20,name:"Yellow Sun",power:"Universal Fire",action:"Enlightens"}
+  ];
+  const TONES=[
+    {n:1,name:"Magnetic",verb:"Unify",noun:"Purpose"},
+    {n:2,name:"Lunar",verb:"Polarise",noun:"Challenge"},
+    {n:3,name:"Electric",verb:"Activate",noun:"Service"},
+    {n:4,name:"Self-Existing",verb:"Define",noun:"Form"},
+    {n:5,name:"Overtone",verb:"Empower",noun:"Radiance"},
+    {n:6,name:"Rhythmic",verb:"Organise",noun:"Equality"},
+    {n:7,name:"Resonant",verb:"Channel",noun:"Attunement"},
+    {n:8,name:"Galactic",verb:"Harmonise",noun:"Integrity"},
+    {n:9,name:"Solar",verb:"Pulse",noun:"Intention"},
+    {n:10,name:"Planetary",verb:"Perfect",noun:"Manifestation"},
+    {n:11,name:"Spectral",verb:"Dissolve",noun:"Liberation"},
+    {n:12,name:"Crystal",verb:"Dedicate",noun:"Cooperation"},
+    {n:13,name:"Cosmic",verb:"Endure",noun:"Presence"}
+  ];
+  const MOONS=[
+    {n:1,name:"Magnetic Moon",dates:"Jul 26 – Aug 22"},
+    {n:2,name:"Lunar Moon",dates:"Aug 23 – Sep 19"},
+    {n:3,name:"Electric Moon",dates:"Sep 20 – Oct 17"},
+    {n:4,name:"Self-Existing Moon",dates:"Oct 18 – Nov 14"},
+    {n:5,name:"Overtone Moon",dates:"Nov 15 – Dec 12"},
+    {n:6,name:"Rhythmic Moon",dates:"Dec 13 – Jan 9"},
+    {n:7,name:"Resonant Moon",dates:"Jan 10 – Feb 6"},
+    {n:8,name:"Galactic Moon",dates:"Feb 7 – Mar 6"},
+    {n:9,name:"Solar Moon",dates:"Mar 7 – Apr 3"},
+    {n:10,name:"Planetary Moon",dates:"Apr 4 – May 1"},
+    {n:11,name:"Spectral Moon",dates:"May 2 – May 29"},
+    {n:12,name:"Crystal Moon",dates:"May 30 – Jun 26"},
+    {n:13,name:"Cosmic Moon",dates:"Jun 27 – Jul 24"}
+  ];
+  // Base: Jul 26 1987 = Kin 34 (White Galactic Wizard) - standard Dreamspell
+  // Feb 29 is "Day Out of Time" - does not advance Kin count
+  const BASE=new Date(1987,6,26);
+  const BASE_KIN=34;
+  const target=new Date(dobStr+'T12:00:00');
+  let count=0;
+  let d=new Date(BASE);
+  const forward=target>=BASE;
+  while(d.toDateString()!==target.toDateString()){
+    d.setDate(d.getDate()+(forward?1:-1));
+    if(d.getMonth()===1&&d.getDate()===29) continue; // skip leap day
+    count+=(forward?1:-1);
+  }
+  const kin=((BASE_KIN-1+count)%260+260)%260+1;
+  const seal=SEALS[(kin-1)%20];
+  const tone=TONES[(kin-1)%13];
+  // Birth moon
+  const m=target.getMonth()+1;
+  const dy=target.getDate();
+  let moonN=7;
+  if((m===7&&dy>=26)||(m===8&&dy<=22))moonN=1;
+  else if((m===8&&dy>=23)||(m===9&&dy<=19))moonN=2;
+  else if((m===9&&dy>=20)||(m===10&&dy<=17))moonN=3;
+  else if((m===10&&dy>=18)||(m===11&&dy<=14))moonN=4;
+  else if((m===11&&dy>=15)||(m===12&&dy<=12))moonN=5;
+  else if((m===12&&dy>=13)||(m===1&&dy<=9))moonN=6;
+  else if((m===1&&dy>=10)||(m===2&&dy<=6))moonN=7;
+  else if((m===2&&dy>=7)||(m===3&&dy<=6))moonN=8;
+  else if((m===3&&dy>=7)||(m===4&&dy<=3))moonN=9;
+  else if((m===4&&dy>=4)||(m===5&&dy<=1))moonN=10;
+  else if((m===5&&dy>=2&&dy<=29))moonN=11;
+  else if((m===5&&dy>=30)||(m===6&&dy<=26))moonN=12;
+  else if((m===6&&dy>=27)||(m===7&&dy<=24))moonN=13;
+  const moon=MOONS[moonN-1];
+  const moonTone=TONES[moonN-1];
+  const wsStart=Math.floor((kin-1)/13)*13+1;
+  const wsSeal=SEALS[(wsStart-1)%20];
+  return{kin,seal,tone,moon,moonTone,wsSeal};
+}
+
+async function generate(){
+  const apiKey=document.getElementById('apiKey').value.trim();
+  const name=document.getElementById('fullName').value.trim();
+  const dob=document.getElementById('dob').value;
+  const pob=document.getElementById('pob').value.trim();
+  const tob=document.getElementById('tob').value;
+  const bloodType=document.getElementById('bloodType').value;
+  const focus=document.getElementById('focus').value.trim();
+  // Pre-calculate all systems
+  const cz=dob?getChineseZodiac(dob):null;
+  const chineseText=cz?`\n\nCHINESE ZODIAC (pre-calculated — use exactly as given, do not recalculate or second-guess):\nAnimal: ${cz.animal}\nElement: ${cz.element}\nYin/Yang: ${cz.yinYang}\nFull Sign: ${cz.element} ${cz.animal} (${cz.year} lunar year)\nNote: Birth date was checked against the exact Chinese New Year date for that year. This is correct.`:'';
+  const num=dob&&name?getNumerology(dob,name):null;
+  const numerologyText=num?`\n\nNUMEROLOGY (pre-calculated — use exactly as given):\nLife Path: ${num.lifePathLabel}\nExpression Number: ${num.expression}\nSoul Urge Number: ${num.soulUrge}\nPersonality Number: ${num.personality}`:'';
+  const tarot=dob?getTarotBirthCards(dob):null;
+  const tarotText=tarot?`\n\nTAROT BIRTH CARDS (pre-calculated — use exactly as given):\nPrimary Card: ${tarot.card1}${tarot.card2?'\nSecondary Card: '+tarot.card2:'\n(single card — no secondary)'}`:'';
+  const galacticOn=document.getElementById('includeGalactic')&&document.getElementById('includeGalactic').checked;
+  let galacticText='';
+  let galacticSection='';
+  if(galacticOn&&dob){
+    const g=getGalacticSignature(dob);
+    galacticText=`\n\nGALACTIC SIGNATURE — CRITICAL: Mathematically pre-calculated. Use EXACTLY these values. Do NOT recalculate or deviate:\nKin Number: ${g.kin}\nSolar Seal: ${g.seal.name}\nGalactic Tone: ${g.tone.n} (${g.tone.name})\nFull Signature: ${g.tone.name} ${g.seal.name}, Kin ${g.kin}\nSeal Power: ${g.seal.power} · Seal Action: ${g.seal.action}\nWavespell: ${g.wsSeal.name} Wavespell\nBirth Moon: Moon ${g.moon.n} — ${g.moon.name} (${g.moon.dates}) · Tone: ${g.moonTone.name}`;
+    galacticSection='## ✦ Galactic Signature (13 Moon · Dreamspell)\n';
+  }
+
+  if(!apiKey){status('Please enter your Anthropic API key.','error');return;}
+  if(!name||!dob||!pob){status('Please fill in Full Name, Date of Birth, and Place of Birth.','error');return;}
+
+  const btn=document.getElementById('genBtn');
+  btn.disabled=true;
+
+  let mi=0;
+  status(msgs[0]);
+  const mt=setInterval(()=>{mi=(mi+1)%msgs.length;status(msgs[mi]);},4000);
+
+  const pkgLabel=pkg.id==='simple'?'Simple Reading':pkg.id==='full'?'Full Reading (all 6 systems)':'Family Package';
+  const addonsText=addons.length?' Add-ons: '+addons.join(', '):'';
+  const bloodLine=bloodType?`\nBlood Type: ${bloodType} — INCLUDE a full Blood Type Personality section (Ketsueki-gata — Japanese/Korean tradition) as a mandatory section.`:'';
+  const focusLine=focus?`\nSpecial Focus: ${focus}`:'';
+  const bloodSection=bloodType?'## ✦ Blood Type Personality\n':'';
+  const addonSections=addons.map(a=>`\n## ✦ ${a}`).join('');
+
+  const prompt=`Write a complete Soul Blueprint reading for the following client. This is a professional esoteric profile service.
+
+CRITICAL CHINESE ZODIAC RULE: The birth date is ${dob}. Check if this falls BEFORE the Chinese Lunar New Year of that calendar year. If born before the lunar new year, the person belongs to the PREVIOUS year's animal. State the correct animal and element confidently — do NOT second-guess or show your calculation. Write the correct sign directly.
+
+Client details:
+Name: ${name}
+Date of Birth: ${dob}
+Time of Birth: ${tob||'not provided'}
+Place of Birth: ${pob}${chineseText}${numerologyText}${tarotText}${galacticText}
+Package: ${pkgLabel}${addonsText}${bloodLine}${focusLine}
+
+Write a beautifully crafted, deeply personalised Soul Blueprint. Tone: warm, wise, poetic yet precise. Use rich markdown throughout.
+
+Each major section heading MUST start with ## ✦
+
+IMPORTANT: You MUST complete ALL sections listed below. Do not stop early under any circumstances. Each section minimum 150 words:
+## ✦ Western Astrology
+## ✦ Chinese Zodiac
+## ✦ Numerology
+## ✦ Gematria
+## ✦ Tarot Birth Cards
+${bloodSection}${galacticSection}## ✦ Soul Synthesis${addonSections}`;
+
+  try{
+    const res=await fetch('https://worker-super-heart-af11.douwkotze.workers.dev',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json'
+      },
+      body:JSON.stringify({
+        apiKey:apiKey,
+        model:'claude-haiku-4-5-20251001',
+        max_tokens:10000,
+        system:`You are the Soul Blueprint oracle — a deeply wise, poetic guide who creates personalised esoteric profile reports. Your writing is warm, insightful, and beautifully crafted. Every major section heading starts with ## ✦. Use rich markdown formatting throughout. You MUST complete ALL sections listed in the prompt — never stop early. Each section must be at minimum 150 words, richly detailed and deeply personalised. Do not truncate or omit any section. CRITICAL RULE: Any values marked as pre-calculated (Chinese Zodiac, Galactic Signature, Numerology, Tarot) are mathematically verified. You MUST use them exactly as given — never recalculate, never substitute your own values.`,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+
+    clearInterval(mt);
+
+    if(!res.ok){
+      const e=await res.json().catch(()=>({}));
+      throw new Error(e.error?.message||`API error ${res.status}`);
+    }
+
+    const data=await res.json();
+    const text=data.content?.map(b=>b.type==='text'?b.text:'').join('')||'';
+    if(!text)throw new Error('Empty response received.');
+
+    status('✦ Report complete — preparing your PDF...','loading');
+
+    // Parse dob for display
+    const dobD=new Date(dob+'T12:00:00');
+    const dobDisplay=dobD.toLocaleDateString('en-ZA',{day:'numeric',month:'long',year:'numeric'});
+    const metaLine=[dobDisplay,pob,bloodType?'Blood Type '+bloodType:''].filter(Boolean).join(' · ');
+
+    buildPDF(name,metaLine,text,pkgLabel+(addons.length?' + '+addons.join(', '):''));
+
+    setTimeout(()=>{
+      status('✦ Opening print dialog — select "Save as PDF" in your printer options.','loading');
+      const safeName=name.replace(/[^a-zA-Z0-9 ]/g,'').trim().replace(/\s+/g,'_');
+      const origTitle=document.title;
+      document.title=safeName+'_Soul_Blueprint';
+      setTimeout(()=>{window.print();setTimeout(()=>{document.title=origTitle;},2000);},800);
+      btn.disabled=false;
+      btn.textContent='✦ Generate Another Reading ✦';
+    },600);
+
+  }catch(e){
+    clearInterval(mt);
+    status('Error: '+e.message,'error');
+    btn.disabled=false;
+    btn.textContent='✦ Generate & Download PDF ✦';
+  }
+}
+
+/* ── Markdown → HTML ── */
+function mdToHtml(md){
+  let h=md
+    // blockquotes
+    .replace(/^> (.+)$/gm,'<blockquote>$1</blockquote>')
+    // h3
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    // bold
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    // italic
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    // bullet lines → li
+    .replace(/^[\-\*] (.+)$/gm,'<li>$1</li>');
+
+  // wrap consecutive <li> in <ul>
+  h=h.replace(/(<li>[\s\S]*?<\/li>\n?)+/g,m=>'<ul>'+m+'</ul>');
+
+  // tables
+  h=h.replace(/\|(.+)\|\n\|[-| :]+\|\n((?:\|.+\|\n?)+)/g,(match,header,rows)=>{
+    const ths=header.split('|').filter(c=>c.trim()).map(c=>`<th>${c.trim()}</th>`).join('');
+    const trs=rows.trim().split('\n').map(r=>{
+      const tds=r.split('|').filter(c=>c.trim()).map(c=>`<td>${c.trim()}</td>`).join('');
+      return`<tr>${tds}</tr>`;
+    }).join('');
+    return`<table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>`;
+  });
+
+  // paragraphs — split on double newlines, wrap non-tag content
+  h=h.split(/\n{2,}/).map(block=>{
+    block=block.trim();
+    if(!block)return'';
+    if(/^<(h[23]|ul|blockquote|table)/.test(block))return block;
+    return`<p>${block.replace(/\n/g,' ')}</p>`;
+  }).join('\n');
+
+  return h;
+}
+
+function getSectionClass(heading){
+  const h=heading.toLowerCase();
+  if(h.includes('astro'))return'sec-astro';
+  if(h.includes('chinese'))return'sec-chinese';
+  if(h.includes('numer'))return'sec-numerology';
+  if(h.includes('gematria'))return'sec-gematria';
+  if(h.includes('tarot'))return'sec-tarot';
+  if(h.includes('blood'))return'sec-blood';
+  if(h.includes('synthesis'))return'sec-synthesis';
+  if(h.includes('relation'))return'sec-relationships';
+  if(h.includes('career'))return'sec-career';
+  if(h.includes('year'))return'sec-year';
+  return'sec-synthesis';
+}
+
+function buildPDF(name,meta,rawText,pkg){
+  const now=new Date().toLocaleDateString('en-ZA',{day:'numeric',month:'long',year:'numeric'});
+
+  // split into sections on ## ✦ — discard anything before first real section
+  const parts=rawText.split(/(?=^## ✦ )/m).filter(s=>s.trim());
+  // Remove any intro block that doesn't start with ## ✦
+  const cleanParts=parts.filter(p=>p.trimStart().startsWith('## ✦'));
+
+  let sectionsHtml='';
+  cleanParts.forEach(part=>{
+    const lines=part.trim().split('\n');
+    const heading=lines[0].replace(/^## ✦ /,'').trim();
+    const body=lines.slice(1).join('\n').trim();
+    const cls=getSectionClass(heading);
+    sectionsHtml+=`
+      <div class="pdf-section ${cls}">
+        <h2>✦ ${heading}</h2>
+        ${mdToHtml(body)}
+      </div>`;
+  });
+
+  document.getElementById('pdfOutput').innerHTML=`
+    <div class="pdf-page">
+      <div class="pdf-header">
+        <div class="pdf-logo">✦</div>
+        <h1>Soul Blueprint</h1>
+        <div class="pdf-subtitle">Sacred Esoteric Profile</div>
+        <div class="pdf-client">${name}</div>
+        <div class="pdf-meta">${meta}</div>
+        <div class="pdf-meta" style="margin-top:6px;font-size:8pt;">${pkg}</div>
+      </div>
+      ${sectionsHtml}
+      <div class="pdf-footer">
+        <p>✦ &nbsp; Soul Blueprint SA &nbsp; · &nbsp; soulblueprintsa@gmail.com &nbsp; · &nbsp; Generated ${now} &nbsp; ✦</p>
+      </div>
+    </div>`;
+}
+</script>
+</body>
+</html>
